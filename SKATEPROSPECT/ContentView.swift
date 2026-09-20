@@ -23,7 +23,7 @@ struct ContentView: View {
             ProfileView(favorites: $favorites)
                 .tabItem { Label("Профиль", systemImage: "person.crop.circle.fill") }
         }
-        .tint(.mint)
+        .tint(Color.brandBlue)
         .onChange(of: favorites) { _, newValue in
             FavoriteStore.save(newValue)
         }
@@ -138,7 +138,7 @@ private struct SkateMapView: View {
             TextField("Найти спот", text: $searchText)
                 .textInputAutocapitalization(.never)
                 .foregroundStyle(.white)
-                .tint(.mint)
+                .tint(Color.brandBlue)
                 .frame(maxWidth: 150)
 
             if !searchText.isEmpty {
@@ -175,7 +175,7 @@ private struct SkateMapView: View {
     private var resultsBadge: some View {
         HStack(spacing: 8) {
             Image(systemName: visibleSpots.isEmpty ? "exclamationmark.magnifyingglass" : "mappin.and.ellipse")
-                .foregroundStyle(.mint)
+                .foregroundStyle(Color.brandBlue)
             Text(visibleSpots.isEmpty ? "Споты не найдены" : "Спотов на карте: \(visibleSpots.count)")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.white)
@@ -213,7 +213,7 @@ private struct SpotMarker: View {
         VStack(spacing: 0) {
             ZStack {
                 Circle()
-                    .fill(isSelected ? Color.mint : Color.black.opacity(0.88))
+                    .fill(isSelected ? Color.brandBlue : Color.black.opacity(0.88))
                     .frame(width: isSelected ? 52 : 44, height: isSelected ? 52 : 44)
                 Circle()
                     .stroke(.white, lineWidth: 3)
@@ -232,7 +232,7 @@ private struct SpotMarker: View {
             }
             Image(systemName: "triangle.fill")
                 .font(.system(size: 11))
-                .foregroundStyle(isSelected ? .mint : .black.opacity(0.88))
+                .foregroundStyle(isSelected ? Color.brandBlue : Color.black.opacity(0.88))
                 .rotationEffect(.degrees(180))
                 .offset(y: -3)
         }
@@ -251,10 +251,10 @@ private struct FilterChip: View {
         Button(action: action) {
             Label(title, systemImage: icon)
                 .font(.subheadline.weight(.semibold))
-                .foregroundStyle(isSelected ? .black : .white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 14)
                 .frame(height: 40)
-                .background(isSelected ? Color.mint : Color.black.opacity(0.78), in: Capsule())
+                .background(isSelected ? Color.brandBlue : Color.black.opacity(0.78), in: Capsule())
                 .overlay { Capsule().stroke(.white.opacity(isSelected ? 0 : 0.12)) }
         }
         .buttonStyle(.plain)
@@ -300,7 +300,7 @@ private struct SpotCard: View {
 
             HStack(spacing: 8) {
                 StatPill(icon: "star.fill", text: String(format: "%.1f", spot.rating), color: .yellow)
-                StatPill(icon: "figure.skating", text: spot.category.title, color: .mint)
+                StatPill(icon: "figure.skating", text: spot.category.title, color: Color.brandBlue)
                 StatPill(icon: "chart.bar.fill", text: spot.difficulty, color: .orange)
             }
 
@@ -315,8 +315,8 @@ private struct SpotCard: View {
                         .font(.subheadline.bold())
                         .frame(maxWidth: .infinity)
                         .frame(height: 46)
-                        .foregroundStyle(.black)
-                        .background(.mint, in: RoundedRectangle(cornerRadius: 14))
+                        .foregroundStyle(.white)
+                        .background(Color.brandBlue, in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
 

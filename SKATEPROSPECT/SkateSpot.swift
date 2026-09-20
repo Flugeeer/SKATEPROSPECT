@@ -25,9 +25,9 @@ enum SpotCategory: String, CaseIterable, Identifiable {
 
     var color: Color {
         switch self {
-        case .skatepark: .mint
+        case .skatepark: Color.brandBlue
         case .street: .orange
-        case .bowl: .cyan
+        case .bowl: .indigo
         case .plaza: .yellow
         }
     }

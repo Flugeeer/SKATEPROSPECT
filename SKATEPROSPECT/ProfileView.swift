@@ -2,6 +2,13 @@ import SwiftUI
 
 struct ProfileView: View {
     @Binding var favorites: Set<SkateSpot.ID>
+    @AppStorage("profile.name") private var profileName = "Vladislav Katashov"
+    @AppStorage("profile.city") private var profileCity = "Санкт-Петербург"
+    @AppStorage("profile.level") private var profileLevel = "Новичок"
+    @AppStorage("profile.bio") private var profileBio = "хуйхуйхуйхуй"
+    @AppStorage("appearance.theme") private var selectedTheme = AppThemeMode.dark.rawValue
+    @State private var isEditingProfile = false
+    @State private var isChoosingTheme = false
 
     private var favoriteSpots: [SkateSpot] {
         SkateSpot.samples.filter { favorites.contains($0.id) }
@@ -19,8 +26,29 @@ struct ProfileView: View {
                 .padding(16)
                 .padding(.bottom, 16)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Профиль")
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .sheet(isPresented: $isEditingProfile) {
+                EditProfileView(
+                    name: profileName,
+                    city: profileCity,
+                    level: profileLevel,
+                    bio: profileBio
+                ) { name, city, level, bio in
+                    profileName = name
+                    profileCity = city
+                    profileLevel = level
+                    profileBio = bio
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $isChoosingTheme) {
+                ThemeSettingsView(selection: $selectedTheme)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
 
@@ -28,27 +56,44 @@ struct ProfileView: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient(colors: [.mint, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.brandBlue, Color.indigo],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
                     .frame(width: 92, height: 92)
                 Image(systemName: "figure.skating")
                     .font(.system(size: 40, weight: .bold))
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.white)
             }
-            .overlay { Circle().stroke(.white, lineWidth: 4) }
-            .shadow(color: .mint.opacity(0.25), radius: 14, y: 8)
+            .overlay { Circle().stroke(.white.opacity(0.9), lineWidth: 4) }
+            .shadow(color: Color.brandBlue.opacity(0.35), radius: 16, y: 8)
 
-            Text("Скейтбордист")
+            Text(profileName)
                 .font(.title2.bold())
-            Label("Санкт-Петербург", systemImage: "location.fill")
+            Label(profileCity, systemImage: "location.fill")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+            Text(profileBio)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .padding(.horizontal, 28)
 
-            Button("Редактировать профиль") { }
-                .font(.subheadline.bold())
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 18)
-                .frame(height: 40)
-                .background(.mint, in: Capsule())
+            Button {
+                isEditingProfile = true
+            } label: {
+                Label("Редактировать профиль", systemImage: "pencil")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 18)
+                    .frame(height: 42)
+                    .background(Color.brandBlue, in: Capsule())
+            }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -60,17 +105,18 @@ struct ProfileView: View {
             Divider().frame(height: 44)
             ProfileStat(value: "6", title: "Спотов")
             Divider().frame(height: 44)
-            ProfileStat(value: "Новичок", title: "Уровень")
+            ProfileStat(value: profileLevel, title: "Уровень")
         }
         .padding(.vertical, 16)
-        .background(.background, in: RoundedRectangle(cornerRadius: 20))
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
+        .overlay { RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.06)) }
     }
 
     private var favoritesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Избранные споты", systemImage: "heart.fill")
                 .font(.headline)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white)
 
             if favoriteSpots.isEmpty {
                 VStack(spacing: 10) {
@@ -86,13 +132,13 @@ struct ProfileView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
-                .background(.background, in: RoundedRectangle(cornerRadius: 20))
+                .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
             } else {
                 ForEach(favoriteSpots) { spot in
                     HStack(spacing: 12) {
                         Image(systemName: spot.category.icon)
                             .font(.title3.bold())
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white)
                             .frame(width: 44, height: 44)
                             .background(spot.category.color, in: RoundedRectangle(cornerRadius: 12))
                         VStack(alignment: .leading, spacing: 3) {
@@ -107,7 +153,7 @@ struct ProfileView: View {
                         }
                     }
                     .padding(12)
-                    .background(.background, in: RoundedRectangle(cornerRadius: 16))
+                    .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16))
                 }
             }
         }
@@ -115,13 +161,182 @@ struct ProfileView: View {
 
     private var settingsSection: some View {
         VStack(spacing: 0) {
-            ProfileRow(icon: "bell.fill", title: "Уведомления", color: .orange)
+            Button {
+                isChoosingTheme = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "circle.lefthalf.filled")
+                        .foregroundStyle(.white)
+                        .frame(width: 30, height: 30)
+                        .background(Color.brandBlue, in: RoundedRectangle(cornerRadius: 8))
+                    Text("Тема").font(.subheadline.weight(.medium))
+                    Spacer()
+                    Text(currentTheme.title)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.bold())
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(12)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
             Divider().padding(.leading, 52)
-            ProfileRow(icon: "shield.fill", title: "Приватность", color: .blue)
+            ProfileRow(icon: "bell.fill", title: "Уведомления", color: Color.brandBlue)
+            Divider().padding(.leading, 52)
+            ProfileRow(icon: "shield.fill", title: "Приватность", color: .indigo)
             Divider().padding(.leading, 52)
             ProfileRow(icon: "questionmark.circle.fill", title: "Помощь", color: .purple)
         }
-        .background(.background, in: RoundedRectangle(cornerRadius: 20))
+        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    private var currentTheme: AppThemeMode {
+        AppThemeMode(rawValue: selectedTheme) ?? .dark
+    }
+}
+
+private struct ThemeSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selection: String
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 10) {
+                ForEach(AppThemeMode.allCases) { theme in
+                    Button {
+                        withAnimation(.snappy) {
+                            selection = theme.rawValue
+                        }
+                    } label: {
+                        HStack(spacing: 14) {
+                            Image(systemName: theme.icon)
+                                .font(.title3.bold())
+                                .foregroundStyle(Color.brandBlue)
+                                .frame(width: 42, height: 42)
+                                .background(Color.brandBlue.opacity(0.14), in: RoundedRectangle(cornerRadius: 12))
+                            Text(theme.title)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            if selection == theme.rawValue {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.brandBlue)
+                            }
+                        }
+                        .padding(12)
+                        .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(selection == theme.rawValue ? Color.brandBlue : .clear, lineWidth: 1.5)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer()
+            }
+            .padding(16)
+            .background(Color.appBackground.ignoresSafeArea())
+            .navigationTitle("Тема приложения")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Готово") { dismiss() }
+                }
+            }
+        }
+        .tint(Color.brandBlue)
+    }
+}
+
+private struct EditProfileView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var name: String
+    @State private var city: String
+    @State private var level: String
+    @State private var bio: String
+
+    private let levels = ["Новичок", "Любитель", "Продвинутый", "Про"]
+    let onSave: (String, String, String, String) -> Void
+
+    init(
+        name: String,
+        city: String,
+        level: String,
+        bio: String,
+        onSave: @escaping (String, String, String, String) -> Void
+    ) {
+        _name = State(initialValue: name)
+        _city = State(initialValue: city)
+        _level = State(initialValue: level)
+        _bio = State(initialValue: bio)
+        self.onSave = onSave
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack {
+                        Spacer()
+                        ZStack {
+                            Circle()
+                                .fill(LinearGradient(colors: [Color.brandBlue, Color.indigo], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                .frame(width: 88, height: 88)
+                            Image(systemName: "figure.skating")
+                                .font(.system(size: 38, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
+                }
+
+                Section("Основное") {
+                    LabeledContent("Имя") {
+                        TextField("Скейтбордист", text: $name)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent("Город") {
+                        TextField("Санкт-Петербург", text: $city)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    Picker("Уровень", selection: $level) {
+                        ForEach(levels, id: \.self) { Text($0) }
+                    }
+                }
+
+                Section("О себе") {
+                    TextField("Расскажи немного о своём катании", text: $bio, axis: .vertical)
+                        .lineLimit(3...6)
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(Color.appBackground)
+            .navigationTitle("Редактирование")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Отмена") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Сохранить") {
+                        onSave(
+                            name.trimmingCharacters(in: .whitespacesAndNewlines),
+                            city.trimmingCharacters(in: .whitespacesAndNewlines),
+                            level,
+                            bio.trimmingCharacters(in: .whitespacesAndNewlines)
+                        )
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+        .tint(Color.brandBlue)
     }
 }
 

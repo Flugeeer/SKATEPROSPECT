@@ -14,8 +14,9 @@ struct SKATEPROSPECTApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+            //Передаем сюда тему приложения
                 .environmentObject(appearance)
-                .appTheme(appearance.theme)
+                .preferredColorScheme(appearance.theme.colorScheme)
         }
     }
 }

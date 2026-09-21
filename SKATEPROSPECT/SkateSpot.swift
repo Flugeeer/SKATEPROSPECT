@@ -1,9 +1,13 @@
 import MapKit
 import SwiftUI
 
+//база, чтобы чекать че за споты есть
+
 enum SpotCategory: String, CaseIterable, Identifiable {
     case skatepark, street, bowl, plaza
     var id: Self { self }
+    
+    // Название для категории спотов
 
     var title: String {
         switch self {
@@ -13,7 +17,8 @@ enum SpotCategory: String, CaseIterable, Identifiable {
         case .plaza: "Плаза"
         }
     }
-
+// Иконки для категории спотов
+    
     var icon: String {
         switch self {
         case .skatepark: "figure.skating"
@@ -23,6 +28,7 @@ enum SpotCategory: String, CaseIterable, Identifiable {
         }
     }
 
+    // Цвета для категории спотов
     var color: Color {
         switch self {
         case .skatepark: Color.brandBlue
@@ -32,6 +38,8 @@ enum SpotCategory: String, CaseIterable, Identifiable {
         }
     }
 }
+
+// Переменные для спотов
 
 struct SkateSpot: Identifiable, Hashable {
     let id: UUID
@@ -43,10 +51,13 @@ struct SkateSpot: Identifiable, Hashable {
     let difficulty: String
     let rating: Double
     let details: String
+    
+    //Кооррдинаты для спотов 
 
     var coordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
+    // сам массив спотов и их локации и полная информация о них
 
     static let samples: [SkateSpot] = [
         SkateSpot(id: UUID(uuidString: "B61DF770-1242-4EA0-8A6A-000000000001")!, name: "Севкабель Порт", address: "Кожевенная линия, 40", latitude: 59.9246, longitude: 30.2417, category: .plaza, difficulty: "Средний", rating: 4.8, details: "Просторная набережная, ровное покрытие и городские грани. Особенно красиво на закате."),
@@ -58,6 +69,7 @@ struct SkateSpot: Identifiable, Hashable {
     ]
 }
 
+//Тут координаты центра спб
 extension MKCoordinateRegion {
     static let saintPetersburg = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 59.9386, longitude: 30.3141),

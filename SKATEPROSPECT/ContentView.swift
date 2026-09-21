@@ -8,21 +8,31 @@
 import MapKit
 import SwiftUI
 
+
 struct ContentView: View {
     @State private var favorites: Set<SkateSpot.ID>
+    @SceneStorage("selectedTab") private var selectedTab = "map"
 
+    //Контейнер для сортировки favorite спотов
     init() {
         _favorites = State(initialValue: FavoriteStore.load())
     }
 
+    //TabView для выбора скрина
+
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
+            // Передаем контейнер любимых спотов
             SkateMapView(favorites: $favorites)
                 .tabItem { Label("Карта", systemImage: "map.fill") }
+                .tag("map")
 
             ProfileView(favorites: $favorites)
                 .tabItem { Label("Профиль", systemImage: "person.crop.circle.fill") }
+                .tag("profile")
         }
+        
+        //Цвет, примари
         .tint(Color.brandBlue)
         .onChange(of: favorites) { _, newValue in
             FavoriteStore.save(newValue)
@@ -30,6 +40,7 @@ struct ContentView: View {
     }
 }
 
+// Сама карта
 private struct SkateMapView: View {
     @State private var cameraPosition: MapCameraPosition = .region(.saintPetersburg)
     @State private var selectedSpotID: SkateSpot.ID?
@@ -38,6 +49,7 @@ private struct SkateMapView: View {
     @StateObject private var locationManager = LocationManager()
     @Binding var favorites: Set<SkateSpot.ID>
 
+    //Передаем массив всех спотов указанных на карте
     private var visibleSpots: [SkateSpot] {
         SkateSpot.samples.filter { spot in
             let matchesCategory = selectedCategory == nil || spot.category == selectedCategory
@@ -49,6 +61,7 @@ private struct SkateMapView: View {
         }
     }
 
+    //Выбранный спот
     private var selectedSpot: SkateSpot? {
         SkateSpot.samples.first { $0.id == selectedSpotID }
     }
@@ -271,31 +284,10 @@ private struct SpotCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             HStack(alignment: .top, spacing: 12) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(spot.category.color.gradient)
-                        .frame(width: 54, height: 54)
-                    Image(systemName: spot.category.icon)
-                        .font(.title2.bold())
-                        .foregroundStyle(.black)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(spot.name).font(.title3.bold()).foregroundStyle(.white)
-                    Label(spot.address, systemImage: "location.fill")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.65))
-                        .lineLimit(1)
-                }
+                spotIcon
+                title
                 Spacer()
-                Button(action: onClose) {
-                    Image(systemName: "xmark")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.white.opacity(0.65))
-                        .frame(width: 32, height: 32)
-                        .background(.white.opacity(0.08), in: Circle())
-                }
-                .buttonStyle(.plain)
+                closeButton
             }
 
             HStack(spacing: 8) {
@@ -309,32 +301,70 @@ private struct SpotCard: View {
                 .foregroundStyle(.white.opacity(0.76))
                 .lineLimit(2)
 
-            HStack(spacing: 10) {
-                Button { openDirections() } label: {
-                    Label("Маршрут", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
-                        .font(.subheadline.bold())
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 46)
-                        .foregroundStyle(.white)
-                        .background(Color.brandBlue, in: RoundedRectangle(cornerRadius: 14))
-                }
-                .buttonStyle(.plain)
-
-                Button(action: onFavorite) {
-                    Image(systemName: isFavorite ? "heart.fill" : "heart")
-                        .font(.title3.bold())
-                        .foregroundStyle(isFavorite ? .pink : .white)
-                        .frame(width: 50, height: 46)
-                        .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(isFavorite ? "Удалить из избранного" : "Добавить в избранное")
-            }
+            actions
         }
         .padding(18)
         .background(.black.opacity(0.9), in: RoundedRectangle(cornerRadius: 24))
         .overlay { RoundedRectangle(cornerRadius: 24).stroke(.white.opacity(0.12)) }
         .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
+    }
+
+    private var spotIcon: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(spot.category.color.gradient)
+                .frame(width: 54, height: 54)
+            Image(systemName: spot.category.icon)
+                .font(.title2.bold())
+                .foregroundStyle(.black)
+        }
+    }
+
+    private var title: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(spot.name)
+                .font(.title3.bold())
+                .foregroundStyle(.white)
+            Label(spot.address, systemImage: "location.fill")
+                .font(.caption)
+                .foregroundStyle(.white.opacity(0.65))
+                .lineLimit(1)
+        }
+    }
+
+    private var closeButton: some View {
+        Button(action: onClose) {
+            Image(systemName: "xmark")
+                .font(.subheadline.bold())
+                .foregroundStyle(.white.opacity(0.65))
+                .frame(width: 32, height: 32)
+                .background(.white.opacity(0.08), in: Circle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var actions: some View {
+        HStack(spacing: 10) {
+            Button { openDirections() } label: {
+                Label("Маршрут", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+                    .foregroundStyle(.white)
+                    .background(Color.brandBlue, in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
+
+            Button(action: onFavorite) {
+                Image(systemName: isFavorite ? "heart.fill" : "heart")
+                    .font(.title3.bold())
+                    .foregroundStyle(isFavorite ? .pink : .white)
+                    .frame(width: 50, height: 46)
+                    .background(.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isFavorite ? "Удалить из избранного" : "Добавить в избранное")
+        }
     }
 
     private func openDirections() {

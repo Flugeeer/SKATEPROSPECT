@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ProfileView: View {
+    
+    // Переменные составные для профиля и информация
     @Binding var favorites: Set<SkateSpot.ID>
     @EnvironmentObject private var appearance: AppearanceSettings
     @AppStorage("profile.name") private var profileName = "Vladislav Katashov"
@@ -13,6 +15,8 @@ struct ProfileView: View {
     private var favoriteSpots: [SkateSpot] {
         SkateSpot.samples.filter { favorites.contains($0.id) }
     }
+    
+//навигационные кнопки  и модули для построения приложения
 
     var body: some View {
         NavigationStack {
@@ -26,8 +30,8 @@ struct ProfileView: View {
                 .padding(16)
                 .padding(.bottom, 16)
             }
-            .background(Color.appBackground.ignoresSafeArea())
-            .navigationTitle("Профиль")
+            .background(Color.appBackground.ignoresSafeArea()) // Залупа для заднего плана
+            .navigationTitle("Профиль")  // название вкладки твоей
             .sheet(isPresented: $isEditingProfile) {
                 EditProfileView(
                     name: profileName,
@@ -63,6 +67,7 @@ struct ProfileView: View {
                         )
                     )
                     .frame(width: 92, height: 92)
+               // фигурка скейтера для профиля
                 Image(systemName: "figure.skating")
                     .font(.system(size: 40, weight: .bold))
                     .foregroundStyle(.white)
@@ -70,6 +75,7 @@ struct ProfileView: View {
             .overlay { Circle().stroke(.white.opacity(0.9), lineWidth: 4) }
             .shadow(color: Color.brandBlue.opacity(0.35), radius: 16, y: 8)
 
+            // модификации для модулей составного профиля
             Text(profileName)
                 .font(.title2.bold())
             Label(profileCity, systemImage: "location.fill")
@@ -82,6 +88,7 @@ struct ProfileView: View {
                 .lineLimit(2)
                 .padding(.horizontal, 28)
 
+            // кнопка редактирования профиля
             Button {
                 isEditingProfile = true
             } label: {
@@ -97,6 +104,8 @@ struct ProfileView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
     }
+    
+    // Статки))
 
     private var stats: some View {
         HStack(spacing: 0) {
@@ -111,6 +120,7 @@ struct ProfileView: View {
         .overlay { RoundedRectangle(cornerRadius: 20).stroke(.white.opacity(0.06)) }
     }
 
+    // Функция для отображения любимых спотов
     private var favoritesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Избранные споты", systemImage: "heart.fill")
@@ -133,6 +143,7 @@ struct ProfileView: View {
                 .padding(.vertical, 24)
                 .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 20))
             } else {
+                //хуйня для сортировки спотов
                 ForEach(favoriteSpots) { spot in
                     HStack(spacing: 12) {
                         Image(systemName: spot.category.icon)
@@ -157,7 +168,7 @@ struct ProfileView: View {
             }
         }
     }
-
+ //Секция настроек
     private var settingsSection: some View {
         VStack(spacing: 0) {
             Button {

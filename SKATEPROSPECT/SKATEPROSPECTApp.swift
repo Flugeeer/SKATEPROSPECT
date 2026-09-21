@@ -9,14 +9,13 @@ import SwiftUI
 
 @main
 struct SKATEPROSPECTApp: App {
-    @AppStorage("appearance.theme") private var selectedTheme = AppThemeMode.dark.rawValue
+    @StateObject private var appearance = AppearanceSettings()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .preferredColorScheme(
-                    AppThemeMode(rawValue: selectedTheme)?.colorScheme
-                )
+                .environmentObject(appearance)
+                .appTheme(appearance.theme)
         }
     }
 }

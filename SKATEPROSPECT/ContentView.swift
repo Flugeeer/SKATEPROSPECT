@@ -361,3 +361,29 @@ private struct StatPill: View {
             .background(color.opacity(0.14), in: Capsule())
     }
 }
+
+#Preview("Карта • Тёмная") {
+    ContentView()
+        .environmentObject(AppearanceSettings(theme: .dark))
+        .appTheme(.dark)
+}
+
+#Preview("Карта • Светлая") {
+    ContentView()
+        .environmentObject(AppearanceSettings(theme: .light))
+        .appTheme(.light)
+}
+
+#Preview("Карточка спота") {
+    ZStack {
+        Color.appBackground.ignoresSafeArea()
+        SpotCard(
+            spot: SkateSpot.samples[0],
+            isFavorite: true,
+            onFavorite: {},
+            onClose: {}
+        )
+        .padding(16)
+    }
+    .appTheme(.dark)
+}

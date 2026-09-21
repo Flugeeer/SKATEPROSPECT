@@ -2,11 +2,11 @@ import SwiftUI
 
 struct ProfileView: View {
     @Binding var favorites: Set<SkateSpot.ID>
+    @EnvironmentObject private var appearance: AppearanceSettings
     @AppStorage("profile.name") private var profileName = "Vladislav Katashov"
     @AppStorage("profile.city") private var profileCity = "Санкт-Петербург"
     @AppStorage("profile.level") private var profileLevel = "Новичок"
     @AppStorage("profile.bio") private var profileBio = "хуйхуйхуйхуй"
-    @AppStorage("appearance.theme") private var selectedTheme = AppThemeMode.dark.rawValue
     @State private var isEditingProfile = false
     @State private var isChoosingTheme = false
 
@@ -28,7 +28,6 @@ struct ProfileView: View {
             }
             .background(Color.appBackground.ignoresSafeArea())
             .navigationTitle("Профиль")
-            .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $isEditingProfile) {
                 EditProfileView(
                     name: profileName,
@@ -45,7 +44,7 @@ struct ProfileView: View {
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $isChoosingTheme) {
-                ThemeSettingsView(selection: $selectedTheme)
+                ThemeSettingsView(selection: $appearance.theme)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
@@ -116,7 +115,7 @@ struct ProfileView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Избранные споты", systemImage: "heart.fill")
                 .font(.headline)
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
 
             if favoriteSpots.isEmpty {
                 VStack(spacing: 10) {
@@ -193,13 +192,13 @@ struct ProfileView: View {
     }
 
     private var currentTheme: AppThemeMode {
-        AppThemeMode(rawValue: selectedTheme) ?? .dark
+        appearance.theme
     }
 }
 
 private struct ThemeSettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Binding var selection: String
+    @Binding var selection: AppThemeMode
 
     var body: some View {
         NavigationStack {
@@ -207,7 +206,7 @@ private struct ThemeSettingsView: View {
                 ForEach(AppThemeMode.allCases) { theme in
                     Button {
                         withAnimation(.snappy) {
-                            selection = theme.rawValue
+                            selection = theme
                         }
                     } label: {
                         HStack(spacing: 14) {
@@ -220,7 +219,7 @@ private struct ThemeSettingsView: View {
                                 .font(.body.weight(.semibold))
                                 .foregroundStyle(.primary)
                             Spacer()
-                            if selection == theme.rawValue {
+                            if selection == theme {
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.title3)
                                     .foregroundStyle(Color.brandBlue)
@@ -230,7 +229,7 @@ private struct ThemeSettingsView: View {
                         .background(Color.cardBackground, in: RoundedRectangle(cornerRadius: 16))
                         .overlay {
                             RoundedRectangle(cornerRadius: 16)
-                                .stroke(selection == theme.rawValue ? Color.brandBlue : .clear, lineWidth: 1.5)
+                                .stroke(selection == theme ? Color.brandBlue : .clear, lineWidth: 1.5)
                         }
                     }
                     .buttonStyle(.plain)
@@ -372,4 +371,54 @@ private struct ProfileRow: View {
         }
         .padding(12)
     }
+}
+
+private struct ProfileCanvasPreview: View {
+    @State private var favorites: Set<SkateSpot.ID> = [
+        SkateSpot.samples[0].id,
+        SkateSpot.samples[2].id
+    ]
+    @StateObject private var appearance: AppearanceSettings
+
+    init(theme: AppThemeMode) {
+        _appearance = StateObject(wrappedValue: AppearanceSettings(theme: theme))
+    }
+
+    var body: some View {
+        ProfileView(favorites: $favorites)
+            .environmentObject(appearance)
+            .appTheme(appearance.theme)
+    }
+}
+
+private struct ThemeCanvasPreview: View {
+    @State private var selection: AppThemeMode = .dark
+
+    var body: some View {
+        ThemeSettingsView(selection: $selection)
+            .appTheme(selection)
+    }
+}
+
+#Preview("Профиль • Тёмная") {
+    ProfileCanvasPreview(theme: .dark)
+}
+
+#Preview("Профиль • Светлая") {
+    ProfileCanvasPreview(theme: .light)
+}
+
+#Preview("Редактирование профиля") {
+    EditProfileView(
+        name: "Скейтбордист",
+        city: "Санкт-Петербург",
+        level: "Любитель",
+        bio: "Люблю стрит и длинные вечерние сессии.",
+        onSave: { _, _, _, _ in }
+    )
+    .appTheme(.dark)
+}
+
+#Preview("Выбор темы") {
+    ThemeCanvasPreview()
 }

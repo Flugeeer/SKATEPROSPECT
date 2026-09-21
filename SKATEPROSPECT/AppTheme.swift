@@ -32,6 +32,35 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
     }
 }
 
+final class AppearanceSettings: ObservableObject {
+    private static let storageKey = "appearance.theme"
+
+    @Published var theme: AppThemeMode {
+        didSet {
+            UserDefaults.standard.set(theme.rawValue, forKey: Self.storageKey)
+        }
+    }
+
+    init() {
+        let savedValue = UserDefaults.standard.string(forKey: Self.storageKey)
+        theme = AppThemeMode(rawValue: savedValue ?? "") ?? .dark
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func appTheme(_ theme: AppThemeMode) -> some View {
+        switch theme {
+        case .system:
+            self
+        case .light:
+            preferredColorScheme(.light)
+        case .dark:
+            preferredColorScheme(.dark)
+        }
+    }
+}
+
 extension Color {
     static let brandBlue = Color(red: 0.08, green: 0.42, blue: 1.0)
     static let appBackground = Color(uiColor: .systemGroupedBackground)

@@ -41,9 +41,13 @@ final class AppearanceSettings: ObservableObject {
         }
     }
 
-    init() {
-        let savedValue = UserDefaults.standard.string(forKey: Self.storageKey)
-        theme = AppThemeMode(rawValue: savedValue ?? "") ?? .dark
+    init(theme previewTheme: AppThemeMode? = nil) {
+        if let previewTheme {
+            theme = previewTheme
+        } else {
+            let savedValue = UserDefaults.standard.string(forKey: Self.storageKey)
+            theme = AppThemeMode(rawValue: savedValue ?? "") ?? .dark
+        }
     }
 }
 

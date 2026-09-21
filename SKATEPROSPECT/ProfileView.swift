@@ -372,3 +372,53 @@ private struct ProfileRow: View {
         .padding(12)
     }
 }
+
+private struct ProfileCanvasPreview: View {
+    @State private var favorites: Set<SkateSpot.ID> = [
+        SkateSpot.samples[0].id,
+        SkateSpot.samples[2].id
+    ]
+    @StateObject private var appearance: AppearanceSettings
+
+    init(theme: AppThemeMode) {
+        _appearance = StateObject(wrappedValue: AppearanceSettings(theme: theme))
+    }
+
+    var body: some View {
+        ProfileView(favorites: $favorites)
+            .environmentObject(appearance)
+            .appTheme(appearance.theme)
+    }
+}
+
+private struct ThemeCanvasPreview: View {
+    @State private var selection: AppThemeMode = .dark
+
+    var body: some View {
+        ThemeSettingsView(selection: $selection)
+            .appTheme(selection)
+    }
+}
+
+#Preview("Профиль • Тёмная") {
+    ProfileCanvasPreview(theme: .dark)
+}
+
+#Preview("Профиль • Светлая") {
+    ProfileCanvasPreview(theme: .light)
+}
+
+#Preview("Редактирование профиля") {
+    EditProfileView(
+        name: "Скейтбордист",
+        city: "Санкт-Петербург",
+        level: "Любитель",
+        bio: "Люблю стрит и длинные вечерние сессии.",
+        onSave: { _, _, _, _ in }
+    )
+    .appTheme(.dark)
+}
+
+#Preview("Выбор темы") {
+    ThemeCanvasPreview()
+}

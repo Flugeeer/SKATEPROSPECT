@@ -8,16 +8,21 @@
 import MapKit
 import SwiftUI
 
+
 struct ContentView: View {
     @State private var favorites: Set<SkateSpot.ID>
     @SceneStorage("selectedTab") private var selectedTab = "map"
 
+    //Контейнер для сортировки favorite спотов
     init() {
         _favorites = State(initialValue: FavoriteStore.load())
     }
 
+    //TabView для выбора скрина
+
     var body: some View {
         TabView(selection: $selectedTab) {
+            // Передаем контейнер любимых спотов
             SkateMapView(favorites: $favorites)
                 .tabItem { Label("Карта", systemImage: "map.fill") }
                 .tag("map")
@@ -26,6 +31,8 @@ struct ContentView: View {
                 .tabItem { Label("Профиль", systemImage: "person.crop.circle.fill") }
                 .tag("profile")
         }
+        
+        //Цвет, примари
         .tint(Color.brandBlue)
         .onChange(of: favorites) { _, newValue in
             FavoriteStore.save(newValue)
@@ -33,6 +40,7 @@ struct ContentView: View {
     }
 }
 
+// Сама карта
 private struct SkateMapView: View {
     @State private var cameraPosition: MapCameraPosition = .region(.saintPetersburg)
     @State private var selectedSpotID: SkateSpot.ID?
@@ -41,6 +49,7 @@ private struct SkateMapView: View {
     @StateObject private var locationManager = LocationManager()
     @Binding var favorites: Set<SkateSpot.ID>
 
+    //Передаем массив всех спотов указанных на карте
     private var visibleSpots: [SkateSpot] {
         SkateSpot.samples.filter { spot in
             let matchesCategory = selectedCategory == nil || spot.category == selectedCategory
@@ -52,6 +61,7 @@ private struct SkateMapView: View {
         }
     }
 
+    //Выбранный спот
     private var selectedSpot: SkateSpot? {
         SkateSpot.samples.first { $0.id == selectedSpotID }
     }

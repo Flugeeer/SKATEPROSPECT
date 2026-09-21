@@ -211,12 +211,14 @@ private struct ThemeSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selection: AppThemeMode
 
+    // Popup для выбора темы приложения
     var body: some View {
         NavigationStack {
             VStack(spacing: 10) {
                 ForEach(AppThemeMode.allCases) { theme in
                     Button {
                         withAnimation(.snappy) {
+                            // Сразу меняем общую тему после нажатия
                             selection = theme
                         }
                     } label: {
@@ -258,6 +260,10 @@ private struct ThemeSettingsView: View {
             }
         }
         .tint(Color.brandBlue)
+        // Меняем тему самого popup, а не только экрана под ним
+        .preferredColorScheme(selection.colorScheme)
+        // Пересобираем popup чтобы тема точно обновилась на реальном устройстве
+        .id(selection)
     }
 }
 

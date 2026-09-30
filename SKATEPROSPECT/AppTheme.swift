@@ -1,5 +1,6 @@
 import SwiftUI
 
+// Все темы которые можно выбрать в настройках профиля
 enum AppThemeMode: String, CaseIterable, Identifiable {
     case system
     case light
@@ -7,6 +8,7 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
 
     var id: Self { self }
 
+    // Название темы для popup меню
     var title: String {
         switch self {
         case .system: "Как на устройстве"
@@ -15,6 +17,7 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
         }
     }
 
+    // Иконка рядом с названием темы
     var icon: String {
         switch self {
         case .system: "circle.lefthalf.filled"
@@ -23,6 +26,7 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
         }
     }
 
+    // Передаем выбранную тему в SwiftUI
     var colorScheme: ColorScheme? {
         switch self {
         case .system: nil
@@ -32,11 +36,13 @@ enum AppThemeMode: String, CaseIterable, Identifiable {
     }
 }
 
+// Один общий контейнер темы для всего приложения
 final class AppearanceSettings: ObservableObject {
     private static let storageKey = "appearance.theme"
 
     @Published var theme: AppThemeMode {
         didSet {
+            // Сохраняем тему чтобы она не сбросилась после перезапуска
             UserDefaults.standard.set(theme.rawValue, forKey: Self.storageKey)
         }
     }
@@ -52,6 +58,7 @@ final class AppearanceSettings: ObservableObject {
 }
 
 extension View {
+    // Модификатор темы для Canvas Preview
     @ViewBuilder
     func appTheme(_ theme: AppThemeMode) -> some View {
         switch theme {
@@ -66,6 +73,7 @@ extension View {
 }
 
 extension Color {
+    // Основные цвета приложения
     static let brandBlue = Color(red: 0.08, green: 0.42, blue: 1.0)
     static let appBackground = Color(uiColor: .systemGroupedBackground)
     static let cardBackground = Color(uiColor: .secondarySystemGroupedBackground)

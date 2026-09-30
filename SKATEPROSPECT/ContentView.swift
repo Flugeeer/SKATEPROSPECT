@@ -46,6 +46,11 @@ private struct SkateMapView: View {
     @State private var selectedSpotID: SkateSpot.ID?
     @State private var selectedCategory: SpotCategory?
     @State private var searchText = ""
+    @State private var activeRoute: MKRoute?
+    @State private var routeDestinationID: SkateSpot.ID?
+    @State private var routingSpotID: SkateSpot.ID?
+    @State private var routeErrorMessage = ""
+    @State private var isShowingRouteError = false
     @StateObject private var locationManager = LocationManager()
     @Binding var favorites: Set<SkateSpot.ID>
 
@@ -70,6 +75,15 @@ private struct SkateMapView: View {
         ZStack(alignment: .top) {
             Map(position: $cameraPosition, selection: $selectedSpotID) {
                 UserAnnotation()
+
+                // Синяя линия маршрута остается внутри нашей карты
+                if let activeRoute {
+                    MapPolyline(activeRoute.polyline)
+                        .stroke(
+                            Color.brandBlue,
+                            style: StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
+                        )
+                }
 
                 ForEach(visibleSpots) { spot in
                     Annotation(spot.name, coordinate: spot.coordinate, anchor: .bottom) {
@@ -101,6 +115,9 @@ private struct SkateMapView: View {
                 SpotCard(
                     spot: spot,
                     isFavorite: favorites.contains(spot.id),
+                    route: routeDestinationID == spot.id ? activeRoute : nil,
+                    isBuildingRoute: routingSpotID == spot.id,
+                    onRoute: { buildRoute(to: spot) },
                     onFavorite: { toggleFavorite(spot.id) },
                     onClose: { selectedSpotID = nil }
                 )
@@ -113,6 +130,11 @@ private struct SkateMapView: View {
         }
         .animation(.snappy, value: selectedSpotID)
         .animation(.snappy, value: selectedCategory)
+        .alert("Маршрут недоступен", isPresented: $isShowingRouteError) {
+            Button("Понятно", role: .cancel) { }
+        } message: {
+            Text(routeErrorMessage)
+        }
         .onAppear {
             locationManager.requestPermissionAndLocation()
         }
@@ -202,6 +224,59 @@ private struct SkateMapView: View {
     private func toggleFavorite(_ id: SkateSpot.ID) {
         if favorites.contains(id) { favorites.remove(id) } else { favorites.insert(id) }
     }
+
+    // Строим пеший маршрут от текущей позиции до выбранного спота
+    private func buildRoute(to spot: SkateSpot) {
+        guard let userLocation = locationManager.location else {
+            locationManager.requestPermissionAndLocation()
+            routeErrorMessage = "Разреши доступ к геопозиции, чтобы построить маршрут от текущего места."
+            isShowingRouteError = true
+            return
+        }
+
+        routingSpotID = spot.id
+
+        let request = MKDirections.Request()
+        request.source = MKMapItem(
+            placemark: MKPlacemark(coordinate: userLocation.coordinate)
+        )
+        request.destination = MKMapItem(
+            placemark: MKPlacemark(coordinate: spot.coordinate)
+        )
+        request.transportType = .walking
+        request.requestsAlternateRoutes = false
+
+        Task {
+            do {
+                let response = try await MKDirections(request: request).calculate()
+                guard let route = response.routes.first else {
+                    throw RouteError.routeNotFound
+                }
+
+                activeRoute = route
+                routeDestinationID = spot.id
+                routingSpotID = nil
+
+                // Показываем весь маршрут целиком вместе с небольшим отступом
+                let routeRect = route.polyline.boundingMapRect
+                let horizontalPadding = max(routeRect.size.width * 0.18, 500)
+                let verticalPadding = max(routeRect.size.height * 0.18, 500)
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    cameraPosition = .rect(
+                        routeRect.insetBy(dx: -horizontalPadding, dy: -verticalPadding)
+                    )
+                }
+            } catch {
+                routingSpotID = nil
+                routeErrorMessage = "Не получилось найти пешеходный маршрут до этого спота. Проверь интернет и попробуй ещё раз."
+                isShowingRouteError = true
+            }
+        }
+    }
+}
+
+private enum RouteError: Error {
+    case routeNotFound
 }
 
 private enum FavoriteStore {
@@ -275,9 +350,11 @@ private struct FilterChip: View {
 }
 
 private struct SpotCard: View {
-    @Environment(\.openURL) private var openURL
     let spot: SkateSpot
     let isFavorite: Bool
+    let route: MKRoute?
+    let isBuildingRoute: Bool
+    let onRoute: () -> Void
     let onFavorite: () -> Void
     let onClose: () -> Void
 
@@ -300,6 +377,15 @@ private struct SpotCard: View {
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.76))
                 .lineLimit(2)
+
+            if let route {
+                HStack(spacing: 14) {
+                    Label(routeDistance(route.distance), systemImage: "figure.walk")
+                    Label(routeDuration(route.expectedTravelTime), systemImage: "clock.fill")
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.8))
+            }
 
             actions
         }
@@ -345,15 +431,24 @@ private struct SpotCard: View {
 
     private var actions: some View {
         HStack(spacing: 10) {
-            Button { openDirections() } label: {
-                Label("Маршрут", systemImage: "arrow.triangle.turn.up.right.diamond.fill")
-                    .font(.subheadline.bold())
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 46)
-                    .foregroundStyle(.white)
-                    .background(Color.brandBlue, in: RoundedRectangle(cornerRadius: 14))
+            Button(action: onRoute) {
+                HStack(spacing: 8) {
+                    if isBuildingRoute {
+                        ProgressView().tint(.white)
+                        Text("Строим...")
+                    } else {
+                        Image(systemName: "point.topleft.down.to.point.bottomright.curvepath.fill")
+                        Text(route == nil ? "Маршрут" : "Перестроить")
+                    }
+                }
+                .font(.subheadline.bold())
+                .frame(maxWidth: .infinity)
+                .frame(height: 46)
+                .foregroundStyle(.white)
+                .background(Color.brandBlue, in: RoundedRectangle(cornerRadius: 14))
             }
             .buttonStyle(.plain)
+            .disabled(isBuildingRoute)
 
             Button(action: onFavorite) {
                 Image(systemName: isFavorite ? "heart.fill" : "heart")
@@ -367,13 +462,19 @@ private struct SpotCard: View {
         }
     }
 
-    private func openDirections() {
-        var components = URLComponents(string: "https://maps.apple.com/")
-        components?.queryItems = [
-            URLQueryItem(name: "daddr", value: "\(spot.coordinate.latitude),\(spot.coordinate.longitude)"),
-            URLQueryItem(name: "dirflg", value: "w")
-        ]
-        if let url = components?.url { openURL(url) }
+    private func routeDistance(_ meters: CLLocationDistance) -> String {
+        if meters >= 1_000 {
+            return String(format: "%.1f км", meters / 1_000)
+        }
+        return "\(Int(meters.rounded())) м"
+    }
+
+    private func routeDuration(_ seconds: TimeInterval) -> String {
+        let minutes = max(1, Int((seconds / 60).rounded()))
+        if minutes >= 60 {
+            return "\(minutes / 60) ч \(minutes % 60) мин"
+        }
+        return "\(minutes) мин"
     }
 }
 
@@ -410,6 +511,9 @@ private struct StatPill: View {
         SpotCard(
             spot: SkateSpot.samples[0],
             isFavorite: true,
+            route: nil,
+            isBuildingRoute: false,
+            onRoute: {},
             onFavorite: {},
             onClose: {}
         )

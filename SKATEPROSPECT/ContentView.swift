@@ -462,12 +462,15 @@ private struct SpotCard: View {
         }
     }
 
+    // Расчет дистанции
     private func routeDistance(_ meters: CLLocationDistance) -> String {
         if meters >= 1_000 {
             return String(format: "%.1f км", meters / 1_000)
         }
         return "\(Int(meters.rounded())) м"
     }
+    
+    // расчет времени
 
     private func routeDuration(_ seconds: TimeInterval) -> String {
         let minutes = max(1, Int((seconds / 60).rounded()))

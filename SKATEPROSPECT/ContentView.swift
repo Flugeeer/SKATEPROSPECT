@@ -395,6 +395,7 @@ private struct SpotCard: View {
         .shadow(color: .black.opacity(0.3), radius: 20, y: 10)
     }
 
+    // иконка спота
     private var spotIcon: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 14)
@@ -405,6 +406,8 @@ private struct SpotCard: View {
                 .foregroundStyle(.black)
         }
     }
+    
+    // название спота
 
     private var title: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -417,6 +420,8 @@ private struct SpotCard: View {
                 .lineLimit(1)
         }
     }
+    
+    // закрыть карточку
 
     private var closeButton: some View {
         Button(action: onClose) {
@@ -429,6 +434,7 @@ private struct SpotCard: View {
         .buttonStyle(.plain)
     }
 
+    // кнопка постройки маршрута
     private var actions: some View {
         HStack(spacing: 10) {
             Button(action: onRoute) {
@@ -450,6 +456,7 @@ private struct SpotCard: View {
             .buttonStyle(.plain)
             .disabled(isBuildingRoute)
 
+            // кнопка добавления в избранное
             Button(action: onFavorite) {
                 Image(systemName: isFavorite ? "heart.fill" : "heart")
                     .font(.title3.bold())

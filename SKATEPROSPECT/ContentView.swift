@@ -496,18 +496,21 @@ private struct StatPill: View {
     }
 }
 
+//карта темная тема
+
 #Preview("Карта • Тёмная") {
     ContentView()
         .environmentObject(AppearanceSettings(theme: .dark))
         .appTheme(.dark)
 }
 
+// карта светлая темна
 #Preview("Карта • Светлая") {
     ContentView()
         .environmentObject(AppearanceSettings(theme: .light))
         .appTheme(.light)
 }
-
+// сама карточка спота
 #Preview("Карточка спота") {
     ZStack {
         Color.appBackground.ignoresSafeArea()
